@@ -1,5 +1,6 @@
 from netflixdata import NetflixData
 import settings
+from movies import Movies
 import time
 
 
@@ -9,20 +10,23 @@ def log(str):
 def main():
 
     # parameters
-    isRawData = True
     isSavingData = False
 
     #settings.init()
     print '=========== NETFLIX RATING PREDICTION =========='
 
+    movies = Movies()
+    if settings.IS_TEST_DATA:
+        log('Num of movies '+ str(len(movies.movie_ids)))
 
     print '=========== DATA LOADING... =========='
     start_time = time.time()
-    nexflix_data = NetflixData(isRawData)
+
+    nexflix_data = NetflixData(settings.data_files[0], 4)
+
     if settings.IS_TEST_DATA:
         log('Num of data points '+ str(len(nexflix_data.ratings)))
-        log('Num of movies '+ str(len(nexflix_data.movie_ids)))
-        log('Num of customers '+ str(len(nexflix_data.customer_ids)))
+
     end_time = time.time()
     log('loading data takes ' + str(end_time - start_time) + ' seconds')
 
@@ -38,7 +42,4 @@ def main():
 
     print '=========== EVALUATING =========='
 
-
 if __name__ == "__main__": main()
-
-

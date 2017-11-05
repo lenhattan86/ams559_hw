@@ -24,29 +24,25 @@ class NetflixData(object):
 
     binary_data='rating.dat'
 
-
-    curr_data_points = 0;
+    curr_line = 0;
     ratings = []
     movie_ids = []
     customer_ids = set()
     DEBUG=True
+    curr_offset=0
 
-    def __init__(self, isRawData=True):
+    def __init__(self, file_name, chunk_index):
         self.log('init netflix data')
-
-        if isRawData:
-            for file_name in settings.data_files:
-                self.load_data(file_name)
-        else:
-            self.loadFromFile()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
+        self.load_data_chunk(file_name, chunk_index)
 
     def load_data(self, file_name):
-        if (self.curr_data_points >= settings.max_train_points & settings.max_train_points > 0):
+        if (self.curr_line >= settings.max_lines & settings.max_lines > 0):
             return
 
         self.log('Start reading file' + file_name + '\n')
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        #data_file = open(dir_path + '/' + settings.data_folder + '/' + file_name, 'r')
         stop = False
         movie_id = ''
         with open(dir_path + '/' + settings.data_folder + '/' + file_name) as data_file:
@@ -56,10 +52,11 @@ class NetflixData(object):
                     stop = True
                     break
 
+                self.curr_line= self.curr_line + 1
+
                 if ':' in line:
                     movie_id = int(line.split(':')[0])
                     self.movie_ids.append(movie_id)
-
                 else:
                     rating_data = line.split(',')
                     customer_id = int(rating_data[0])
@@ -75,14 +72,53 @@ class NetflixData(object):
 
                     rating = Rating(movie_id, customer_id, rating_year, rating_month, rating_day, rate_val)
                     self.ratings.append(rating)
-                    self.curr_data_points=self.curr_data_points+1
 
-                if self.curr_data_points >= settings.max_train_points & settings.max_train_points > 0:
-                    self.log(str(self.curr_data_points))
+                if self.curr_line >= settings.max_lines & settings.max_lines > 0:
+                    self.log(str(self.curr_line))
                     stop = True
                     break
 
-        #data_file.close()
+        data_file.close()
+
+    def load_data_chunk(self, path_to_file, chunk_index):
+        assert 0 <= chunk_index and chunk_index < settings.num_chunks_a_file
+
+        movie_id=''
+        with open(path_to_file) as data_file:
+            data_file.seek(0,2)
+            file_size = data_file.tell()
+
+            ini = file_size * chunk_index / settings.num_chunks_a_file
+            end = file_size * (1 + chunk_index) / settings.num_chunks_a_file
+
+            if ini <= 0:
+                data_file.seek(0)
+            else:
+                data_file.seek(ini-1)
+                # is readline necessary?
+                data_file.readline()
+
+            while data_file.tell() < end:
+                line = data_file.readline()
+
+                if ':' in line:
+                        movie_id = int(line.split(':')[0])
+                        self.movie_ids.append(movie_id)
+                else:
+                    rating_data = line.split(',')
+                    customer_id = int(rating_data[0])
+
+                    self.customer_ids.add(customer_id)
+
+                    rate_val = int(rating_data[1])
+                    rating_date = rating_data[2].split('-')
+
+                    rating_year = int(rating_date[0])
+                    rating_month = int(rating_date[1])
+                    rating_day = int(rating_date[2])
+
+                    rating = Rating(movie_id, customer_id, rating_year, rating_month, rating_day, rate_val)
+                    self.ratings.append(rating)
 
     def save2file(self):
         with open("super.file", "wb") as f:
