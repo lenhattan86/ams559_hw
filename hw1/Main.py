@@ -2,6 +2,7 @@ from netflixdata import NetflixData
 import settings
 from movies import Movies
 import time
+import training_algorithms as alg
 
 
 def log(str):
@@ -22,7 +23,7 @@ def main():
     print '=========== DATA LOADING... =========='
     start_time = time.time()
 
-    nexflix_data = NetflixData(settings.data_files[0], 4)
+    nexflix_data = NetflixData(settings.data_files[0], 0)
 
     if settings.IS_TEST_DATA:
         log('Num of data points '+ str(len(nexflix_data.ratings)))
@@ -39,6 +40,15 @@ def main():
 
 
     print '============ TRAINING ==========='
+    start_time = time.time()
+
+    feature_matrix = nexflix_data.customer_ids
+    label_vector = nexflix_data.ratings
+
+    alg.linear_regression(feature_matrix,label_vector)
+
+    end_time = time.time()
+    log('Training takes ' + str(end_time - start_time) + ' seconds')
 
     print '=========== EVALUATING =========='
 

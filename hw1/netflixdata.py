@@ -8,6 +8,8 @@ import settings
 import os
 import pickle
 
+import tensorflow as tf
+
 class NetflixData(object):
     """
     This class loads the Netflixdata and privides with some util functions. NetflixData has the following properties
@@ -26,8 +28,11 @@ class NetflixData(object):
 
     curr_line = 0;
     ratings = []
+    years = []
+    months =  []
+    days = []
     movie_ids = []
-    customer_ids = set()
+    customer_ids = []
     DEBUG=True
     curr_offset=0
 
@@ -56,12 +61,12 @@ class NetflixData(object):
 
                 if ':' in line:
                     movie_id = int(line.split(':')[0])
-                    self.movie_ids.append(movie_id)
                 else:
+                    self.movie_ids.append(movie_id)
                     rating_data = line.split(',')
                     customer_id = int(rating_data[0])
 
-                    self.customer_ids.add(customer_id)
+                    self.customer_ids.append(customer_id)
 
                     rate_val = int(rating_data[1])
                     rating_date = rating_data[2].split('-')
@@ -70,8 +75,11 @@ class NetflixData(object):
                     rating_month = int(rating_date[1])
                     rating_day = int(rating_date[2])
 
-                    rating = Rating(movie_id, customer_id, rating_year, rating_month, rating_day, rate_val)
-                    self.ratings.append(rating)
+                    self.ratings.append(rate_val)
+                    self.years.append(rating_year)
+                    self.days.append(rating_day)
+                    self.months.append(rating_month)
+
 
                 if self.curr_line >= settings.max_lines & settings.max_lines > 0:
                     self.log(str(self.curr_line))
@@ -103,12 +111,12 @@ class NetflixData(object):
 
                 if ':' in line:
                         movie_id = int(line.split(':')[0])
-                        self.movie_ids.append(movie_id)
                 else:
+                    self.movie_ids.append(movie_id)
                     rating_data = line.split(',')
                     customer_id = int(rating_data[0])
 
-                    self.customer_ids.add(customer_id)
+                    self.customer_ids.append(customer_id)
 
                     rate_val = int(rating_data[1])
                     rating_date = rating_data[2].split('-')
@@ -117,8 +125,10 @@ class NetflixData(object):
                     rating_month = int(rating_date[1])
                     rating_day = int(rating_date[2])
 
-                    rating = Rating(movie_id, customer_id, rating_year, rating_month, rating_day, rate_val)
-                    self.ratings.append(rating)
+                    self.ratings.append(rate_val)
+                    self.years.append(rating_year)
+                    self.days.append(rating_day)
+                    self.months.append(rating_month)
 
     def save2file(self):
         with open("super.file", "wb") as f:
@@ -132,3 +142,23 @@ class NetflixData(object):
         if settings.DEBUG:
             print('[NetflixData] '+str)
 
+    def save2_tfrecord(self):
+        train_filename = 'train.tfrecords'  # address to save the TFRecords file
+        # open the TFRecords file
+        writer = tf.python_io.TFRecordWriter(train_filename)
+        for i in range(len(train_addrs)):
+
+            # Load the image
+            img = load_image(train_addrs[i])
+            label = train_labels[i]
+            # Create a feature
+            feature = {'train/label': _int64_feature(label),
+                       'train/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+            # Create an example protocol buffer
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+
+        writer.close()
+        sys.stdout.flush()
