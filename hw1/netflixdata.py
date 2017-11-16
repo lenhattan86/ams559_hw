@@ -40,7 +40,7 @@ class NetflixData(object):
         self.log('init netflix data')
         dir_path = os.path.dirname(os.path.realpath(__file__))
         path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
-        self.load_data_chunk(file_name, chunk_index)
+        self.load_data_chunk(path_to_file, chunk_index)
 
     def load_data(self, file_name):
         if (self.curr_line >= settings.max_lines & settings.max_lines > 0):

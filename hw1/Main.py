@@ -42,13 +42,14 @@ def main():
     print '============ TRAINING ==========='
     start_time = time.time()
 
-    feature_matrix = nexflix_data.customer_ids
-    label_vector = nexflix_data.ratings
-
-    alg.linear_regression(feature_matrix,label_vector)
+    ratings = nexflix_data.ratings
+    alg.collaborative_filter_opt(ratings)
 
     end_time = time.time()
     log('Training takes ' + str(end_time - start_time) + ' seconds')
+
+    print '============= PREDICTING =========='
+
 
     print '=========== EVALUATING =========='
 
