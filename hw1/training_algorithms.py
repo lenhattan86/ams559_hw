@@ -1,11 +1,13 @@
-import tensorflow as tf
+import time
+from collections import deque
+
 import numpy as np
+import tensorflow as tf
+from six import next
+from tensorflow.core.framework import summary_pb2
+
 import dataio
 import ops
-import settings
-
-
-rng = numpy.random
 
 BATCH_SIZE = 1000
 USER_NUM = 6040
