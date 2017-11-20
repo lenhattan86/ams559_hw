@@ -114,7 +114,7 @@ def svd():
         ## load tf record 
         feature = {'train/user': tf.FixedLenFeature([], tf.int64),
                    'train/movie': tf.FixedLenFeature([], tf.int64),
-                   'train/rating': tf.FixedLenFeature([], tf.int64),}
+                   'train/rating': tf.FixedLenFeature([], tf.int64)}
 
         # Create a list of filenames and pass it to a queue
         filename_queue = tf.train.string_input_producer([settings.TRAIN_FILE], num_epochs=1)
@@ -124,7 +124,7 @@ def svd():
         # Decode the record read by the reader
         features = tf.parse_single_example(serialized_example, features=feature)
 
-        # Cast label data into int32
+        # Cast data into int32
         user = tf.cast(features['train/user'], tf.int32)
         movie = tf.cast(features['train/movie'], tf.int32)
         rating = tf.cast(features['train/rating'], tf.int32)
