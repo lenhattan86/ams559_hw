@@ -16,9 +16,9 @@ def main():
     #settings.init()
     print '=========== NETFLIX RATING PREDICTION =========='
 
-    movies = Movies()
-    if settings.IS_TEST_DATA:
-        log('Num of movies '+ str(len(movies.movie_ids)))
+    #movies = Movies()
+    #if settings.IS_TEST_DATA:
+    #    log('Num of movies '+ str(len(movies.movie_ids)))
 
     print '=========== DATA LOADING... =========='
     start_time = time.time()
