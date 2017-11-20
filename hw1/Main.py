@@ -24,9 +24,9 @@ def main():
     start_time = time.time()
 
     nexflix_data = NetflixData(settings.data_files[0], 0)
-
-    if settings.IS_TEST_DATA:
-        log('Num of data points '+ str(len(nexflix_data.ratings)))
+    settings.DATA_LEN = len(nexflix_data.ratings)
+    
+    log('Num of data points '+ str(len(nexflix_data.ratings)))
 
     end_time = time.time()
     log('loading data takes ' + str(end_time - start_time) + ' seconds')
@@ -45,7 +45,6 @@ def main():
     log('Training takes ' + str(end_time - start_time) + ' seconds')
 
     print '============= PREDICTING =========='
-
 
     print '=========== EVALUATING =========='
 

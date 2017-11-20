@@ -109,19 +109,22 @@ class NetflixData(object):
         train_users = self.users[0:train_idx]
         train_movies = self.movies[0:train_idx]
         train_ratings = self.ratings[0:train_idx]
+#        print train_users
+#        print train_movies
+#        print train_ratings
         self.save_tfrecord(dir_path + '/' + settings.TRAIN_FILE, train_users, train_movies, train_ratings)
 
-        val_idx = int(settings.VAL_RATIO*len(self.ratings))
-        val_users = self.users[train_idx:val_idx]
-        val_movies =  self.movies[train_idx:val_idx]
-        val_ratings = self.ratings[train_idx:val_idx]
-        self.save_tfrecord(dir_path + '/' + settings.VAL_FILE, val_users, val_movies, val_ratings)
+    #    val_idx = int(settings.VAL_RATIO*len(self.ratings))
+    #    val_users = self.users[train_idx:val_idx]
+    #    val_movies =  self.movies[train_idx:val_idx]
+    #    val_ratings = self.ratings[train_idx:val_idx]
+    #    self.save_tfrecord(dir_path + '/' + settings.VAL_FILE, val_users, val_movies, val_ratings)
 
-        test_idx = int(settings.TEST_RATIO*len(self.ratings))
-        test_users = self.users[val_idx:test_idx]
-        test_movies = self.users[val_idx:test_idx]
-        test_ratings = self.users[val_idx:test_idx]
-        self.save_tfrecord(dir_path + '/' + settings.TEST_FILE, test_users, test_movies, test_ratings)
+    #    test_idx = int(settings.TEST_RATIO*len(self.ratings))
+    #    test_users = self.users[val_idx:test_idx]
+    #    test_movies = self.users[val_idx:test_idx]
+    #    test_ratings = self.users[val_idx:test_idx]
+    #    self.save_tfrecord(dir_path + '/' + settings.TEST_FILE, test_users, test_movies, test_ratings)
 
 
     def save_tfrecord(self, path_to_file, users, movies, ratings):

@@ -47,18 +47,21 @@ NUM_MOVIES=5
 #
 NUM_FEATURES=3
 
-BATCH_SIZE = 10
+BATCH_SIZE = 2
 USER_NUM = 4
 ITEM_NUM = 5
 DIM = 3
-EPOCH_MAX = 100
+EPOCH_MAX = 5
 DEVICE = "/cpu:0"
+DATA_LEN=15
 
 
-TRAIN_RATIO = 0.8
-VAL_RATIO = 0.6
-TEST_RATIO = 1
+TRAIN_RATIO = 1
+#VAL_RATIO = 0.6
+#TEST_RATIO = 1
 
 TRAIN_FILE='gen/train.tfrecord'
 VAL_FILE='gen/val.tfrecord'
 TEST_FILE='gen/test.tfrecord'
+
+LOG_FILE='log.csv'
