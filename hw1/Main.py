@@ -11,7 +11,7 @@ def log(str):
 def main():
 
     # parameters
-    isSavingData = False
+    isSavingData = True
 
     #settings.init()
     print '=========== NETFLIX RATING PREDICTION =========='
@@ -34,17 +34,13 @@ def main():
     if isSavingData:
         print '=========== SAVING DATA... =========='
         start_time = time.time()
-        nexflix_data.save2file()
+        nexflix_data.save_all_tf_record()
         end_time = time.time()
         log('saving data takes ' + str(end_time - start_time) + ' seconds')
 
-
     print '============ TRAINING ==========='
     start_time = time.time()
-
-    ratings = nexflix_data.ratings
-    alg.collaborative_filter_opt(ratings)
-
+    alg.svd()
     end_time = time.time()
     log('Training takes ' + str(end_time - start_time) + ' seconds')
 

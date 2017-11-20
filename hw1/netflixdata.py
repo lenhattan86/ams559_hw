@@ -9,6 +9,8 @@ import os
 import pickle
 
 import tensorflow as tf
+import utils
+import sys
 
 class NetflixData(object):
     """
@@ -31,8 +33,8 @@ class NetflixData(object):
     years = []
     months =  []
     days = []
-    movie_ids = []
-    customer_ids = []
+    movies = []
+    users = []
     DEBUG=True
     curr_offset=0
 
@@ -41,52 +43,6 @@ class NetflixData(object):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
         self.load_data_chunk(path_to_file, chunk_index)
-
-    def load_data(self, file_name):
-        if (self.curr_line >= settings.max_lines & settings.max_lines > 0):
-            return
-
-        self.log('Start reading file' + file_name + '\n')
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        stop = False
-        movie_id = ''
-        with open(dir_path + '/' + settings.data_folder + '/' + file_name) as data_file:
-            for line in data_file:
-            #line = data_file.readline()
-                if not line:
-                    stop = True
-                    break
-
-                self.curr_line= self.curr_line + 1
-
-                if ':' in line:
-                    movie_id = int(line.split(':')[0])
-                else:
-                    self.movie_ids.append(movie_id)
-                    rating_data = line.split(',')
-                    customer_id = int(rating_data[0])
-
-                    self.customer_ids.append(customer_id)
-
-                    rate_val = int(rating_data[1])
-                    rating_date = rating_data[2].split('-')
-
-                    rating_year = int(rating_date[0])
-                    rating_month = int(rating_date[1])
-                    rating_day = int(rating_date[2])
-
-                    self.ratings.append(rate_val)
-                    self.years.append(rating_year)
-                    self.days.append(rating_day)
-                    self.months.append(rating_month)
-
-
-                if self.curr_line >= settings.max_lines & settings.max_lines > 0:
-                    self.log(str(self.curr_line))
-                    stop = True
-                    break
-
-        data_file.close()
 
     def load_data_chunk(self, path_to_file, chunk_index):
         assert 0 <= chunk_index and chunk_index < settings.num_chunks_a_file
@@ -112,11 +68,11 @@ class NetflixData(object):
                 if ':' in line:
                         movie_id = int(line.split(':')[0])
                 else:
-                    self.movie_ids.append(movie_id)
+                    self.movies.append(movie_id)
                     rating_data = line.split(',')
                     customer_id = int(rating_data[0])
 
-                    self.customer_ids.append(customer_id)
+                    self.users.append(customer_id)
 
                     rate_val = int(rating_data[1])
                     rating_date = rating_data[2].split('-')
@@ -126,9 +82,12 @@ class NetflixData(object):
                     rating_day = int(rating_date[2])
 
                     self.ratings.append(rate_val)
-                    self.years.append(rating_year)
-                    self.days.append(rating_day)
-                    self.months.append(rating_month)
+                    #self.years.append(rating_year)
+                    #self.days.append(rating_day)
+                    #self.months.append(rating_month)
+        ## todo: shuffle the data.
+
+        
 
     def save2file(self):
         with open("super.file", "wb") as f:
@@ -142,18 +101,39 @@ class NetflixData(object):
         if settings.DEBUG:
             print('[NetflixData] '+str)
 
-    def save2_tfrecord(self):
-        train_filename = 'train.tfrecords'  # address to save the TFRecords file
-        # open the TFRecords file
-        writer = tf.python_io.TFRecordWriter(train_filename)
-        for i in range(len(train_addrs)):
+    def save_all_tf_record(self):
+        ## transfer to training, validation, and errors
+        train_idx = int(settings.TRAIN_RATIO*len(self.ratings))
+        train_users = self.users[0:train_idx]
+        train_movies = self.movies[0:train_idx]
+        train_ratings = self.ratings[0:train_idx]
+        self.save_tfrecord(settings.TRAIN_FILE, train_users, train_movies, train_ratings)
 
-            # Load the image
-            img = load_image(train_addrs[i])
-            label = train_labels[i]
+        val_idx = int(settings.VAL_RATIO*len(self.ratings))
+        val_users = self.users[train_idx:val_idx]
+        val_movies =  self.movies[train_idx:val_idx]
+        val_ratings = self.ratings[train_idx:val_idx]
+        self.save_tfrecord(settings.VAL_FILE, val_users, val_movies, val_ratings)
+
+        test_idx = int(settings.TEST_RATIO*len(self.ratings))
+        test_users = self.users[val_idx:test_idx]
+        test_movies = self.users[val_idx:test_idx]
+        test_ratings = self.users[val_idx:test_idx]
+        self.save_tfrecord(settings.TEST_FILE, test_users, test_movies, test_ratings)
+
+
+    def save_tfrecord(self, path_to_file, users, movies, ratings):
+        # open the TFRecords file
+        writer = tf.python_io.TFRecordWriter(path_to_file)
+        for i in range(len(users)):
+            user = users[i]
+            movie = movies[i]
+            rating = ratings[i]
             # Create a feature
-            feature = {'train/label': _int64_feature(label),
-                       'train/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+            feature = {'train/user': utils._int64_feature(user),
+                       'train/movie': utils._int64_feature(movie),
+                       'train/rating': utils._int64_feature(rating)}
+
             # Create an example protocol buffer
             example = tf.train.Example(features=tf.train.Features(feature=feature))
 
