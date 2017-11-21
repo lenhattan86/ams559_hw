@@ -38,13 +38,23 @@ class NetflixData(object):
     DEBUG=True
     curr_offset=0
 
-    def __init__(self, file_name, chunk_index):
+    def __init__(self):
         self.log('init netflix data')
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
-        self.load_data_chunk(path_to_file, chunk_index)
 
-    def load_data_chunk(self, path_to_file, chunk_index):
+        fileLen = len(settings.data_files)
+        for i in range(fileLen):
+            for j in range(settings.num_chunks_a_file):
+                print('load file '+str(i)+'  ' + str(j))
+                file_name = settings.data_files[i]
+                path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
+                self.load_data_chunk(path_to_file, i, j)
+                self.ratings=[]
+                self.users=[]
+                self.movies=[]
+        
+
+    def load_data_chunk(self, path_to_file, file_index, chunk_index):
         assert 0 <= chunk_index and chunk_index < settings.num_chunks_a_file
 
         movie_id=''
@@ -86,7 +96,9 @@ class NetflixData(object):
                     #self.days.append(rating_day)
                     #self.months.append(rating_month)
         ## todo: shuffle the data.
-
+        self.save_all_tf_record(file_index, chunk_index)
+        print settings.DATA_LEN
+        settings.DATA_LEN = settings.DATA_LEN + len(self.ratings)
         
 
     def save2file(self):
@@ -101,7 +113,7 @@ class NetflixData(object):
         if settings.DEBUG:
             print('[NetflixData] '+str)
 
-    def save_all_tf_record(self):
+    def save_all_tf_record(self, fileIdx, file_chunk):
         dir_path = os.path.dirname(os.path.realpath(__file__))
 
         ## transfer to training, validation, and errors
@@ -112,7 +124,8 @@ class NetflixData(object):
         #print train_users
         #print train_movies
         #print train_ratings
-        self.save_tfrecord(dir_path + '/' + settings.TRAIN_FILE, train_users, train_movies, train_ratings)
+        filename= settings.TRAIN_FILE + '_' + str(fileIdx) + '_' 
+        self.save_tfrecord(dir_path + '/' + settings.TRAIN_FILE + '_' +str(fileIdx) + '_' + str(file_chunk), train_users, train_movies, train_ratings)
 
     #    val_idx = int(settings.VAL_RATIO*len(self.ratings))
     #    val_users = self.users[train_idx:val_idx]
@@ -134,6 +147,7 @@ class NetflixData(object):
             user = users[i]
             movie = movies[i]
             rating = ratings[i]
+            print user, movie, rating
             # Create a feature
             feature = {'train/user': utils._int64_feature(user),
                        'train/movie': utils._int64_feature(movie),

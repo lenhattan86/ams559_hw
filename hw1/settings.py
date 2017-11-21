@@ -26,7 +26,7 @@ IS_TEST_DATA = True
 #data_files=['combined_data_1.txt']
 
 data_folder='sample'
-data_files=['data_sample.txt']
+data_files=['data_sample.txt', 'data_sample.txt']
 
 qualify_file=['qualifiying.txt']
 
@@ -51,7 +51,7 @@ BATCH_SIZE = 5
 USER_NUM = 4
 ITEM_NUM = 5
 DIM = 3
-EPOCH_MAX = 3
+EPOCH_MAX = 1
 DEVICE = "/cpu:0"
 DATA_LEN=15
 

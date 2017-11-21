@@ -101,8 +101,7 @@ def svd():
 
             for iBatch in range(samples_per_batch):
                 users, movies, ratings = sess.run([user_queue, movie_queue, rating_queue])   
-                print users              
-
+                # print users              
                 _, pred_batch = sess.run([train_op, infer], feed_dict={user_batch: users,
                                                                        movie_batch: movies,
                                                                        rating_batch: ratings}) 
