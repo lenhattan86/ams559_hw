@@ -21,12 +21,12 @@ IS_TEST_DATA = True
 
 
 ##
-#data_folder='netflix-prize-data'
-#data_files=['combined_data_1.txt', 'combined_data_2.txt', 'combined_data_3.txt', 'combined_data_4.txt']
+data_folder='netflix-prize-data'
+data_files=['combined_data_1.txt', 'combined_data_2.txt', 'combined_data_3.txt', 'combined_data_4.txt']
 #data_files=['combined_data_1.txt']
 
-data_folder='sample'
-data_files=['data_sample.txt', 'data_sample.txt']
+#data_folder='sample'
+#data_files=['data_sample.txt', 'data_sample.txt']
 
 qualify_file=['qualifiying.txt']
 

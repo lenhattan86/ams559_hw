@@ -38,6 +38,10 @@ class NetflixData(object):
     DEBUG=True
     curr_offset=0
 
+    test_users=[]
+    test_movies=[]
+    test_ratings=[]
+
     def __init__(self):
         self.log('init netflix data')
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -49,10 +53,11 @@ class NetflixData(object):
                 file_name = settings.data_files[i]
                 path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
                 self.load_data_chunk(path_to_file, i, j)
-                self.ratings=[]
-                self.users=[]
-                self.movies=[]
-        
+                #self.ratings=[]
+                #self.users=[]
+                #self.movies=[]
+        path_to_file = dir_path + '/' + settings.data_folder + '/' + settings.probe_file
+        self.load_test_data(path_to_file)
 
     def load_data_chunk(self, path_to_file, file_index, chunk_index):
         assert 0 <= chunk_index and chunk_index < settings.num_chunks_a_file
@@ -96,10 +101,38 @@ class NetflixData(object):
                     #self.days.append(rating_day)
                     #self.months.append(rating_month)
         ## todo: shuffle the data.
-        self.save_all_tf_record(file_index, chunk_index)
-        print settings.DATA_LEN
-        settings.DATA_LEN = settings.DATA_LEN + len(self.ratings)
+        data_file.close()
+        #self.save_all_tf_record(file_index, chunk_index)
+        #print settings.DATA_LEN
+        settings.DATA_LEN = len(self.ratings)
+    
+    def load_test_data(self, path_to_file):
         
+        movie_id=''
+        with open(path_to_file) as data_file:
+            while data_file.tell() < end:
+                line = data_file.readline()
+
+                if ':' in line:
+                        movie_id = int(line.split(':')[0])
+                else:
+                    self.test_movies.append(movie_id)
+                    rating_data = line.split(',')
+                    customer_id = int(rating_data[0])
+
+                    self.test_users.append(customer_id)
+
+                    rate_val = int(rating_data[1])
+                    rating_date = rating_data[2].split('-')
+
+                    rating_year = int(rating_date[0])
+                    rating_month = int(rating_date[1])
+                    rating_day = int(rating_date[2])
+
+                    self.test_ratings.append(rate_val)
+                    
+        ## todo: shuffle the data.
+        data_file.close() 
 
     def save2file(self):
         with open("super.file", "wb") as f:
@@ -147,7 +180,7 @@ class NetflixData(object):
             user = users[i]
             movie = movies[i]
             rating = ratings[i]
-            print user, movie, rating
+            #print user, movie, rating
             # Create a feature
             feature = {'train/user': utils._int64_feature(user),
                        'train/movie': utils._int64_feature(movie),
