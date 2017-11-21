@@ -109,9 +109,9 @@ class NetflixData(object):
         train_users = self.users[0:train_idx]
         train_movies = self.movies[0:train_idx]
         train_ratings = self.ratings[0:train_idx]
-#        print train_users
-#        print train_movies
-#        print train_ratings
+        #print train_users
+        #print train_movies
+        #print train_ratings
         self.save_tfrecord(dir_path + '/' + settings.TRAIN_FILE, train_users, train_movies, train_ratings)
 
     #    val_idx = int(settings.VAL_RATIO*len(self.ratings))
