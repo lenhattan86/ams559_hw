@@ -66,7 +66,6 @@ class NetflixData(object):
 
         if settings.USE_PROBE:
             self.extract_probe(df)
-            self.df_train = df
         else:
             self.split_data(df)
         
@@ -108,7 +107,11 @@ class NetflixData(object):
             print probe_ids
             raise ValueError('Some probe item does not have rating value in dictionary.')
             
-        self.df_test = dataio.convert_df(users, movies, ratings) 
+        self.df_test = dataio.convert_df(users, movies, ratings)         
+        include_idx = set(probe_ids)  
+        mask = numpy.array([(i in include_idx) for i in xrange(len(df))])
+        self.df_train = df[~mask]
+        df=[] # clean data
 
         if settings.IS_SAVE_DATA: 
             self.df_test.to_csv('gen/test_data.csv', sep=',')

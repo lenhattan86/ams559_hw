@@ -26,7 +26,10 @@ def main():
     settings.DATA_LEN=0
     nexflix_data = NetflixData()
 
-    settings.LOG_FILE = settings.LOG_FILE + '_' + str(settings.EPOCH_MAX) + '_' + str(settings.REGULARIZATION) + '_' + str(settings.learning_rate) + '.csv'
+    if settings.USE_PROBE:
+        settings.LOG_FILE = settings.LOG_FILE + '.csv'
+    else:
+        settings.LOG_FILE = settings.LOG_FILE + '_' + str(settings.EPOCH_MAX) + '_' + str(settings.REGULARIZATION) + '_' + str(settings.learning_rate) + '.csv'
 
     settings.USER_NUM = nexflix_data.USER_NUM
     settings.MOVIE_NUM = nexflix_data.MOVIE_NUM
