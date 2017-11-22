@@ -46,7 +46,7 @@ if true
                'log_200_2_0.01.csv'
                };
       
-  lambda = [0.0 0.05 0.1 0.25 0.5 1 2]
+  lambda = [0.0 0.05 0.1 0.25 0.5 1]
   minErr = zeros(size(lambda));
   for iFile = 1:length(log_files)
     [iteration,trainErrors,testErrors,complTimes] = importLogFile(log_files{iFile});

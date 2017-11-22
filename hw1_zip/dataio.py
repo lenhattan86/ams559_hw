@@ -16,6 +16,8 @@ def read_process(filname, sep="\t"):
 def convert_df(users, movies, ratings):
     col_names = ["user", "movie", "rating"]
     data = df = pd.DataFrame({'user':users, 'movie':movies, 'rating': ratings})
+    df["user"] -= 1
+    df["movie"] -= 1
     for col in ("user", "movie"):
         df[col] = df[col].astype(np.int32)
     df["rating"] = df["rating"].astype(np.float32)

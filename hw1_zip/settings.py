@@ -1,14 +1,14 @@
 import math
 
-num_chunks_a_file=1;
+num_chunks_a_file=100;
 ##################################
-USE_PROBE = True
+USE_PROBE = False
 LOG_FILE='log'
 TRAIN_RATIO = 0.8
 BATCH_SIZE = 10000
 EPOCH_MAX = 200
 DEVICE = "/cpu:0"
-learning_rate = 0.05
+learning_rate = 0.01
 REGULARIZATION = 2 # 0.0 0.05 0.1 0.15 0.2 0.25
 ###############################
 
@@ -17,7 +17,7 @@ DEBUG = False
 
 #
 IS_TEST_DATA = True
-IS_SAVE_DATA = True
+
 ##
 #global customersId
 #movie_ids=range()
@@ -28,7 +28,7 @@ IS_SAVE_DATA = True
 ##
 data_folder='netflix-prize-data'
 data_files=['combined_data_1.txt', 'combined_data_2.txt', 'combined_data_3.txt', 'combined_data_4.txt']
-#data_files=['combined_data_1.txt']
+# data_files=['combined_data_1.txt']
 
 #data_folder='sample'
 #data_files=['data_sample.txt', 'data_sample.txt']
@@ -45,7 +45,6 @@ NUM_THREADS=8
 
 #
 NUM_USERS=2649429
-USER_MAX = 10000000
 #
 NUM_MOVIES=17770
 

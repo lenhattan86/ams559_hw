@@ -40,13 +40,11 @@ class NetflixData(object):
     movies = []
     users = []
     DEBUG=True
-    curr_offset=0                                                                                           
+    curr_offset=0
 
 
     def __init__(self):
         self.log('init netflix data')
-        self.rate_dict = {}
-        self.rate_idx = {}
         dir_path = os.path.dirname(os.path.realpath(__file__))
 
         fileLen = len(settings.data_files)
@@ -66,24 +64,12 @@ class NetflixData(object):
 
         if settings.USE_PROBE:
             self.extract_probe(df)
-            self.df_train = df
         else:
             self.split_data(df)
-        
-        # clear memory
-        df=[]
+
         self.ratings=[]
         self.users=[]
         self.movies=[]
-        self.rate_dict = {}
-        self.rate_idx = {}
-
-        self.df_test["user"] -= 1
-        self.df_test["movie"] -= 1    
-        self.df_train["user"] -= 1
-        self.df_train["movie"] -= 1   
-
-       
 
     def split_data(self, df):        
         rows = len(df)
@@ -96,23 +82,27 @@ class NetflixData(object):
         users,movies = self.load_probe_chunk()
         ratings = users
         probe_ids = []
+        print('extract probe')
+        #for i in range(len(self.ratings)):
+        #    for j in range(len(users)):                
+        #        if users[j] == self.users[i] and movies[j] == self.movies[i]:
+        #            ratings[j] = self.ratings[i]
+        #            probe_ids.append(i)
 
-        for i in range(len(users)):
-        #for i in range(10):
-            key = movies[i]*settings.USER_MAX + users[i]
-            #print self.rate_dict[key]
-            ratings[i] = self.rate_dict.get(key, -1)
-            probe_ids.append(self.rate_dict.get(key, -1))
+        for j in range(len(users)):                
+            user_ids = [i for i,val in enumerate(self.users) if val==users[j]]            
+            for i in user_ids:
+                if users[j] == self.users[i] and movies[j] == self.movies[i]:
+                    ratings[j] = self.ratings[i]
+                    probe_ids.append(i)
 
-        if min(probe_ids) < 0:
-            print probe_ids
-            raise ValueError('Some probe item does not have rating value in dictionary.')
+        print(len(probe_ids))
+        print(len(users))
             
+        self.df_train = [df[i] for i in probe_ids]
         self.df_test = dataio.convert_df(users, movies, ratings) 
-
-        if settings.IS_SAVE_DATA: 
-            self.df_test.to_csv('gen/test_data.csv', sep=',')
-            #self.df_train.to_csv('gen/train_data', sep=',')
+        self.df_test.to_csv('gen/test_data', sep=',')
+        self.df_train.to_csv('gen/train_data', sep=',')
 
 
     def load_data_chunk(self, path_to_file, file_index, chunk_index):
@@ -143,8 +133,6 @@ class NetflixData(object):
                     rating_data = line.split(',')
                     customer_id = int(rating_data[0])
 
-                    key = movie_id*settings.USER_MAX + customer_id
-
                     self.users.append(customer_id)
 
                     rate_val = int(rating_data[1])
@@ -155,9 +143,6 @@ class NetflixData(object):
                     rating_day = int(rating_date[2])
 
                     self.ratings.append(rate_val)
-
-                    self.rate_dict[key] = rate_val
-                    self.rate_idx[key] = len(self.ratings)-1
                     #self.years.append(rating_year)
                     #self.days.append(rating_day)
                     #self.months.append(rating_month)
