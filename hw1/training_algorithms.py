@@ -15,33 +15,21 @@ import os
 def clip(x):
     return np.clip(x, 1.0, 5.0)
 
-def get_data():
-    df = dataio.read_process("/tmp/movielens/ml-1m/ratings.dat", sep="::")
-    rows = len(df)
-    df = df.iloc[np.random.permutation(rows)].reset_index(drop=True)
-    split_index = int(rows * settings.TEST_RATIO)
-    df_train = df[0:split_index]
-    df_test = df[split_index:].reset_index(drop=True)
-    return df_train, df_test
-
-def make_scalar_summary(name, val):
-    return summary_pb2.Summary(value=[summary_pb2.Summary.Value(tag=name, simple_value=val)])
-
-def svd():
+def svd_bk():
 
     samples_per_batch = settings.DATA_LEN / settings.BATCH_SIZE
 
     ## build the model
     user_batch = tf.placeholder(tf.int32, shape=[None], name="id_user")
-    movie_batch = tf.placeholder(tf.int32, shape=[None], name="id_item")
+    movie_batch = tf.placeholder(tf.int32, shape=[None], name="id_movie")
     rating_batch = tf.placeholder(tf.float32, shape=[None])
 
-    infer, regularizer = ops.inference_svd(user_batch, movie_batch, user_num=settings.USER_NUM+1, item_num=settings.ITEM_NUM+1, dim=settings.DIM,
+    infer, regularizer = ops.inference_svd(user_batch, movie_batch, user_num=settings.USER_NUM+1, movie_num=settings.movie_NUM+1, dim=settings.DIM,
                                            device=settings.DEVICE)
 
     global_step = tf.train.get_or_create_global_step()
 
-    _, train_op = ops.optimization(infer, regularizer, rating_batch, learning_rate=0.001, reg=0.05, device=settings.DEVICE)
+    _, train_op = ops.optimization(infer, regularizer, rating_batch, learning_rating=0.001, reg=0.05, device=settings.DEVICE)
 
     init_op = tf.global_variables_initializer() ##??
 
@@ -125,56 +113,60 @@ def svd():
         summary_file.close()
 
 
-def svd_ref(train, test):
-    samples_per_batch = len(train) // BATCH_SIZE
+def svd(train, test):
+    samples_per_batch = len(train) // settings.BATCH_SIZE
 
     iter_train = dataio.ShuffleIterator([train["user"],
-                                         train["item"],
-                                         train["rate"]],
-                                        batch_size=BATCH_SIZE)
+                                         train["movie"],
+                                         train["rating"]],
+                                        batch_size=settings.BATCH_SIZE)
 
     iter_test = dataio.OneEpochIterator([test["user"],
-                                         test["item"],
-                                         test["rate"]],
+                                         test["movie"],
+                                         test["rating"]],
                                         batch_size=-1)
 
     user_batch = tf.placeholder(tf.int32, shape=[None], name="id_user")
-    item_batch = tf.placeholder(tf.int32, shape=[None], name="id_item")
-    rate_batch = tf.placeholder(tf.float32, shape=[None])
+    movie_batch = tf.placeholder(tf.int32, shape=[None], name="id_movie")
+    rating_batch = tf.placeholder(tf.float32, shape=[None])
 
-    infer, regularizer = ops.inference_svd(user_batch, item_batch, user_num=USER_NUM, item_num=ITEM_NUM, dim=DIM,
-                                           device=DEVICE)
+    infer, regularizer = ops.inference_svd(user_batch, movie_batch, user_num=settings.USER_NUM, movie_num=settings.MOVIE_NUM, dim=settings.DIM,
+                                           device=settings.DEVICE)
     global_step = tf.contrib.framework.get_or_create_global_step()
-    _, train_op = ops.optimization(infer, regularizer, rate_batch, learning_rate=0.001, reg=0.05, device=DEVICE)
+    _, train_op = ops.optimization(infer, regularizer, rating_batch, learning_rate=settings.learning_rate, reg=settings.REGULARIZATION, device=settings.DEVICE)
 
+
+    f1=open(settings.LOG_FILE, 'w+')
+  
     init_op = tf.global_variables_initializer()
     with tf.Session() as sess:
         sess.run(init_op)
-        summary_writer = tf.summary.FileWriter(logdir="/tmp/svd/log", graph=sess.graph)
-        print("{} {} {} {}".format("epoch", "train_error", "val_error", "elapsed_time"))
+        strLine="{},{},{},{}".format("epoch", "train_error", "test_error", "elapsed_time")
+        print(strLine)
         errors = deque(maxlen=samples_per_batch)
         start = time.time()
-        for i in range(EPOCH_MAX * samples_per_batch):
-            users, items, rates = next(iter_train)
+        for i in range(settings.EPOCH_MAX * samples_per_batch):
+            users, movies, ratings = next(iter_train)
             _, pred_batch = sess.run([train_op, infer], feed_dict={user_batch: users,
-                                                                   item_batch: items,
-                                                                   rate_batch: rates})
+                                                                   movie_batch: movies,
+                                                                   rating_batch: ratings})
             pred_batch = clip(pred_batch)
-            errors.append(np.power(pred_batch - rates, 2))
+            errors.append(np.power(pred_batch - ratings, 2))
             if i % samples_per_batch == 0:
                 train_err = np.sqrt(np.mean(errors))
                 test_err2 = np.array([])
-                for users, items, rates in iter_test:
+                for users, movies, ratings in iter_test:
                     pred_batch = sess.run(infer, feed_dict={user_batch: users,
-                                                            item_batch: items})
+                                                            movie_batch: movies})
                     pred_batch = clip(pred_batch)
-                    test_err2 = np.append(test_err2, np.power(pred_batch - rates, 2))
+                    test_err2 = np.append(test_err2, np.power(pred_batch - ratings, 2))
                 end = time.time()
                 test_err = np.sqrt(np.mean(test_err2))
-                print("{:3d} {:f} {:f} {:f}(s)".format(i // samples_per_batch, train_err, test_err,
-                                                       end - start))
-                train_err_summary = make_scalar_summary("training_error", train_err)
-                test_err_summary = make_scalar_summary("test_error", test_err)
-                summary_writer.add_summary(train_err_summary, i)
-                summary_writer.add_summary(test_err_summary, i)
+
+                strLine="{:3d},{:f},{:f},{:f}".format(i // samples_per_batch, train_err, test_err, end - start)
+
+                print(strLine)
+                f1.write(strLine+'\n')
+
                 start = end
+    f1.close()

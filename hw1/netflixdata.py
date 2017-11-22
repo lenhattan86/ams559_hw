@@ -8,9 +8,13 @@ import settings
 import os
 import pickle
 
+import dataio
+
 import tensorflow as tf
 import utils
 import sys
+import numpy as np
+
 
 class NetflixData(object):
     """
@@ -38,26 +42,68 @@ class NetflixData(object):
     DEBUG=True
     curr_offset=0
 
-    test_users=[]
-    test_movies=[]
-    test_ratings=[]
 
     def __init__(self):
         self.log('init netflix data')
         dir_path = os.path.dirname(os.path.realpath(__file__))
 
         fileLen = len(settings.data_files)
+
         for i in range(fileLen):
-            for j in range(settings.num_chunks_a_file):
+            #for j in range(settings.num_chunks_a_file):
+            for j in range(1):    
                 print('load file '+str(i)+'  ' + str(j))
                 file_name = settings.data_files[i]
                 path_to_file = dir_path + '/' + settings.data_folder + '/' + file_name
                 self.load_data_chunk(path_to_file, i, j)
-                #self.ratings=[]
-                #self.users=[]
-                #self.movies=[]
-        path_to_file = dir_path + '/' + settings.data_folder + '/' + settings.probe_file
-        self.load_test_data(path_to_file)
+
+        self.USER_NUM = max(self.users)
+        self.MOVIE_NUM = max(self.movies)
+
+        df=dataio.convert_df(self.users, self.movies, self.ratings) 
+
+        if settings.USE_PROBE:
+            self.extract_probe(df)
+        else:
+            self.split_data(df)
+
+        self.ratings=[]
+        self.users=[]
+        self.movies=[]
+
+    def split_data(self, df):        
+        rows = len(df)
+        df = df.iloc[np.random.permutation(rows)].reset_index(drop=True)
+        split_index = int(rows * settings.TRAIN_RATIO)
+        self.df_train = df[0:split_index]
+        self.df_test = df[split_index:].reset_index(drop=True)   
+
+    def extract_probe(self, df):
+        users,movies = self.load_probe_chunk()
+        ratings = users
+        probe_ids = []
+        print('extract probe')
+        #for i in range(len(self.ratings)):
+        #    for j in range(len(users)):                
+        #        if users[j] == self.users[i] and movies[j] == self.movies[i]:
+        #            ratings[j] = self.ratings[i]
+        #            probe_ids.append(i)
+
+        for j in range(len(users)):                
+            user_ids = [i for i,val in enumerate(self.users) if val==users[j]]            
+            for i in user_ids:
+                if users[j] == self.users[i] and movies[j] == self.movies[i]:
+                    ratings[j] = self.ratings[i]
+                    probe_ids.append(i)
+
+        print(len(probe_ids))
+        print(len(users))
+            
+        self.df_train = [df[i] for i in probe_ids]
+        self.df_test = dataio.convert_df(users, movies, ratings) 
+        self.df_test.to_csv('gen/test_data', sep=',')
+        self.df_train.to_csv('gen/train_data', sep=',')
+
 
     def load_data_chunk(self, path_to_file, file_index, chunk_index):
         assert 0 <= chunk_index and chunk_index < settings.num_chunks_a_file
@@ -106,34 +152,32 @@ class NetflixData(object):
         #print settings.DATA_LEN
         settings.DATA_LEN = len(self.ratings)
     
-    def load_test_data(self, path_to_file):
-        
+    def load_probe_chunk(self):  
+        dir_path = os.path.dirname(os.path.realpath(__file__)) 
+        path_to_file = dir_path + '/' + settings.data_folder + '/' + settings.probe_file
+        users=[]
+        movies=[]
         movie_id=''
         with open(path_to_file) as data_file:
-            while data_file.tell() < end:
+            data_file.seek(0,2)
+            file_size = data_file.tell()            
+            data_file.seek(0)
+            
+            while data_file.tell() < file_size:
                 line = data_file.readline()
+            #for line in data_file:
 
                 if ':' in line:
                         movie_id = int(line.split(':')[0])
                 else:
-                    self.test_movies.append(movie_id)
-                    rating_data = line.split(',')
-                    customer_id = int(rating_data[0])
+                    movies.append(movie_id)
+                    customer_id = int(line)
+                    users.append(customer_id)   
 
-                    self.test_users.append(customer_id)
+        data_file.close()
+        return users, movies
 
-                    rate_val = int(rating_data[1])
-                    rating_date = rating_data[2].split('-')
-
-                    rating_year = int(rating_date[0])
-                    rating_month = int(rating_date[1])
-                    rating_day = int(rating_date[2])
-
-                    self.test_ratings.append(rate_val)
-                    
-        ## todo: shuffle the data.
-        data_file.close() 
-
+  
     def save2file(self):
         with open("super.file", "wb") as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)

@@ -4,15 +4,24 @@ import pandas as pd
 
 
 def read_process(filname, sep="\t"):
-    col_names = ["user", "item", "rate", "st"]
+    col_names = ["user", "movie", "movie", "st"]
     df = pd.read_csv(filname, sep=sep, header=None, names=col_names, engine='python')
     df["user"] -= 1
-    df["item"] -= 1
-    for col in ("user", "item"):
+    df["movie"] -= 1
+    for col in ("user", "movie"):
         df[col] = df[col].astype(np.int32)
-    df["rate"] = df["rate"].astype(np.float32)
+    df["rating"] = df["rating"].astype(np.float32)
     return df
 
+def convert_df(users, movies, ratings):
+    col_names = ["user", "movie", "rating"]
+    data = df = pd.DataFrame({'user':users, 'movie':movies, 'rating': ratings})
+    df["user"] -= 1
+    df["movie"] -= 1
+    for col in ("user", "movie"):
+        df[col] = df[col].astype(np.int32)
+    df["rating"] = df["rating"].astype(np.float32)
+    return df
 
 class ShuffleIterator(object):
     """
